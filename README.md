@@ -42,3 +42,9 @@ def calculate_issn_checkdigit(s):
 
 * 10^7
 
+## Distribution
+
+Snapshot, 2019-11-11, 15:00, UTC+1.
+
+![](static/map.png)
+
