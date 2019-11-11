@@ -62,4 +62,7 @@ Various formats are available.
 
 * [xml](https://portal.issn.org/resource/ISSN/2257-6754?format=xml), [json](https://portal.issn.org/resource/ISSN/2257-6754?format=json), ...
 
+## Harvest
+
+All data is cached (XDG), by default under `$HOME/.cache/issnlister/2019-11-11/...` where raw downloads and combined data lives.
 
