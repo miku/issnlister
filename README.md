@@ -14,7 +14,7 @@ resources, print and online, in any subject.
 
 ## Variants
 
-* E-ISSN (electronic), P-ISSN (print)
+* E-ISSN (electronic), P-ISSN (print), ISSN-L (link)
 
 > Conversely, as defined in ISO 3297:2007, every serial in the ISSN system is
 also assigned a linking ISSN (ISSN-L), typically the same as the ISSN assigned
