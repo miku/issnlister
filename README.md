@@ -46,6 +46,8 @@ def calculate_issn_checkdigit(s):
 
 * 10^7
 
+Current probability that a random, valid ISSN is registered: 0.2714711.
+
 ## Distribution
 
 Snapshot, 2019-11-11, 15:00, UTC+1.
