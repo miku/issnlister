@@ -64,5 +64,11 @@ Various formats are available.
 
 ## Harvest
 
+List ISSN, quietly.
+
+```
+$ issnlister -l -q
+```
+
 All data is cached (XDG), by default under `$HOME/.cache/issnlister/2019-11-11/...` where raw downloads and combined data lives.
 
