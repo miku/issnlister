@@ -56,4 +56,10 @@ Snapshot, 2019-11-11, 15:00, UTC+1.
 
 ![](static/map.png)
 
+## Formats
+
+Various formats are available.
+
+* [xml](https://portal.issn.org/resource/ISSN/2257-6754?format=xml), [json](https://portal.issn.org/resource/ISSN/2257-6754?format=json), ...
+
 
