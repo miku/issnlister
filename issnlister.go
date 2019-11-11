@@ -125,6 +125,10 @@ func (c *Cacher) SitemapFile() string {
 	return filepath.Join(c.SitemapDir(), "sitemap.xml")
 }
 
+func (c *Cacher) SerialnumbersFile() string {
+	return filepath.Join(c.SitemapDir(), "issnlist.tsv")
+}
+
 func (c *Cacher) fetchSitemapIndex() error {
 	if err := ensureDir(c.SitemapDir()); err != nil {
 		return err
@@ -194,6 +198,15 @@ func (c *Cacher) findLocations() error {
 
 // List returns a list of ISSN.
 func (c *Cacher) List() ([]string, error) {
+	if _, err := os.Stat(c.SerialnumbersFile()); err == nil {
+		f, err := os.Open(c.SerialnumbersFile())
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		b, err := ioutil.ReadFile(c.SerialnumbersFile())
+		return strings.Split(string(b), "\n"), nil
+	}
 	if err := c.fetchSitemaps(); err != nil {
 		return nil, err
 	}
@@ -251,6 +264,9 @@ func (c *Cacher) List() ([]string, error) {
 		result = append(result, v)
 	}
 	sort.Strings(result)
+	if err := WriteFileAtomic(c.SerialnumbersFile(), []byte(strings.Join(result, "\n")), 0644); err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
