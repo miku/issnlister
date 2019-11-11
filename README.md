@@ -42,6 +42,8 @@ def calculate_issn_checkdigit(s):
 
 * 2714711 (as of 2019-11-11)
 
+Growth at about 50k to 120k updates and additions per year.
+
 ## Upper limit of valid ISSN?
 
 * 10^7
