@@ -38,6 +38,10 @@ def calculate_issn_checkdigit(s):
     return '{}'.format(checkdigit)
 ```
 
+## Number of ISSN
+
+* 2714711 (as of 2019-11-11)
+
 ## Upper limit of valid ISSN?
 
 * 10^7
@@ -47,4 +51,5 @@ def calculate_issn_checkdigit(s):
 Snapshot, 2019-11-11, 15:00, UTC+1.
 
 ![](static/map.png)
+
 
