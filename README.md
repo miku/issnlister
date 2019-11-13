@@ -72,8 +72,7 @@ $ issnlister -l -q
 
 All data is cached (XDG), by default under `$HOME/.cache/issnlister/2019-11-11/...` where raw downloads and combined data lives.
 
-## Cronify
+## TODO
 
-```
-00 18 * * * (cd $HOME/code/miku/issnli && make && ./issnlister -l -q > issn.tsv && git add issn.tsv && git commit -m "auto-commit issn list" && git push origin master
-```
+* compress cache
+
