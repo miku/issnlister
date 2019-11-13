@@ -74,5 +74,6 @@ All data is cached (XDG), by default under `$HOME/.cache/issnlister/2019-11-11/.
 
 ## TODO
 
-* compress cache
+* [ ] fetch metadata (#1)
+* [ ] compress cache
 
