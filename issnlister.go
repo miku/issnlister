@@ -302,6 +302,7 @@ func fetch(b []byte) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		defer resp.Body.Close()
 		if resp.StatusCode >= 400 {
 			return nil, fmt.Errorf("got %d %s on %s", resp.StatusCode, resp.Status, line)
 		}
