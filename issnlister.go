@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
@@ -29,13 +30,15 @@ import (
 const appName = "issnlister"
 
 var (
-	sitemapIndex = flag.String("s", "https://portal.issn.org/sitemap.xml", "the main sitemap")
-	cacheDir     = flag.String("d", path.Join(xdg.CacheHome, appName), "path to cache dir")
-	quiet        = flag.Bool("q", false, "suppress any extra output")
-	list         = flag.Bool("l", false, "list all cached issn, one per line")
-	dump         = flag.Bool("m", false, "download public metadata in JSON format")
-	numWorkers   = flag.Int("w", runtime.NumCPU()*2, "number of workers")
-	batchSize    = flag.Int("b", 100, "batch size per worker")
+	sitemapIndex    = flag.String("s", "https://portal.issn.org/sitemap.xml", "the main sitemap")
+	cacheDir        = flag.String("d", path.Join(xdg.CacheHome, appName), "path to cache dir")
+	quiet           = flag.Bool("q", false, "suppress any extra output")
+	list            = flag.Bool("l", false, "list all cached issn, one per line")
+	dump            = flag.Bool("m", false, "download public metadata in JSON format")
+	numWorkers      = flag.Int("w", runtime.NumCPU()*2, "number of workers")
+	batchSize       = flag.Int("b", 100, "batch size per worker")
+	skipUndecodable = flag.Bool("u", false, "skip undecodable records")
+	ignoreFile      = flag.String("i", "", `path to file with ISSN to ignore, one ISSN per line, e.g. via: jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt`)
 )
 
 func WriteFileAtomicReader(filename string, r io.Reader, perm os.FileMode) error {
@@ -71,6 +74,102 @@ func WriteFileAtomic(filename string, data []byte, perm os.FileMode) error {
 		os.Remove(f.Name())
 	}
 	return err
+}
+
+// StringSet is map disguised as set.
+type StringSet struct {
+	Set map[string]struct{}
+}
+
+// NewStringSet returns an empty string set. XXX: Make the zero value usable.
+func NewStringSet(s ...string) *StringSet {
+	ss := &StringSet{Set: make(map[string]struct{})}
+	for _, item := range s {
+		ss.Add(item)
+	}
+	return ss
+}
+
+// Add adds a string to a set, returns true if added, false it it already existed (noop).
+func (set *StringSet) Add(s string) bool {
+	_, found := set.Set[s]
+	set.Set[s] = struct{}{}
+	return !found // False if it existed already
+}
+
+// AddAll adds adds a set of string to a set.
+func (set *StringSet) AddAll(s ...string) bool {
+	for _, item := range s {
+		set.Set[item] = struct{}{}
+	}
+	return true
+}
+
+// Contains returns true if given string is in the set, false otherwise.
+func (set *StringSet) Contains(s string) bool {
+	_, found := set.Set[s]
+	return found
+}
+
+// Size returns current number of elements in the set.
+func (set *StringSet) Size() int {
+	return len(set.Set)
+}
+
+// Values returns the set values as a string slice.
+func (set *StringSet) Values() (values []string) {
+	for k := range set.Set {
+		values = append(values, k)
+	}
+	return values
+}
+
+// Values returns the set values as a string slice.
+func (set *StringSet) SortedValues() (values []string) {
+	for k := range set.Set {
+		values = append(values, k)
+	}
+	sort.Strings(values)
+	return values
+}
+
+// Intersection returns the intersection of two string sets.
+func (set *StringSet) Intersection(other *StringSet) *StringSet {
+	isect := NewStringSet()
+	for k := range set.Set {
+		if other.Contains(k) {
+			isect.Add(k)
+		}
+	}
+	return isect
+}
+
+// Difference returns all items, that are in set but not in other.
+func (set *StringSet) Difference(other *StringSet) *StringSet {
+	diff := NewStringSet()
+	for k := range set.Set {
+		if !other.Contains(k) {
+			diff.Add(k)
+		}
+	}
+	return diff
+}
+
+// Define a type named "StringSlice" as a slice of strings.
+// Useful for repeated command line flags.
+type StringSlice []string
+
+// Now, for our new type, implement the two methods of
+// the flag.Value interface...
+// The first method is String() string
+func (i *StringSlice) String() string {
+	return fmt.Sprintf("%s", *i)
+}
+
+// The second method is Set(value string) error
+func (i *StringSlice) Set(value string) error {
+	*i = append(*i, value)
+	return nil
 }
 
 // Sitemapindex was generated 2019-09-28 18:56:12 by tir on sol.
@@ -306,9 +405,17 @@ func fetch(b []byte) ([]byte, error) {
 		if resp.StatusCode >= 400 {
 			return nil, fmt.Errorf("got %s on %s", resp.Status, line)
 		}
-		// Just a minimal container to hold the data to serialize (compact) again.
+		var body bytes.Buffer
+		tee := io.TeeReader(resp.Body, &body)
+		// Just a minimal container to hold the data to serialize (compact)
+		// again. This might fail, if the response is not JSON.
 		var m = make(map[string]interface{})
-		if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		if err := json.NewDecoder(tee).Decode(&m); err != nil {
+			if *skipUndecodable {
+				log.Println(err)
+				log.Println(body.String())
+				continue
+			}
 			return nil, err
 		}
 		if err := enc.Encode(m); err != nil {
@@ -318,8 +425,31 @@ func fetch(b []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func SliceReader(s []string) io.Reader {
+func sliceReader(s []string) io.Reader {
 	return strings.NewReader(strings.Join(s, "\n"))
+}
+
+func linesFromReader(r io.Reader) (result []string, err error) {
+	br := bufio.NewReader(r)
+	for {
+		line, err := br.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, strings.TrimSpace(line))
+	}
+	return result, nil
+}
+
+func linesFromFile(filename string) ([]string, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	return linesFromReader(f)
 }
 
 func main() {
@@ -343,6 +473,27 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		if *ignoreFile != "" {
+			ignoreList, err := linesFromFile(*ignoreFile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("%d to ignore", len(ignoreList))
+
+			ignoreSet := NewStringSet()
+			for _, v := range ignoreList {
+				ignoreSet.Add(v)
+			}
+			var filtered []string
+			for _, issn := range issns {
+				if ignoreSet.Contains(issn) {
+					continue
+				}
+				filtered = append(filtered, issn)
+			}
+			log.Printf("started with %d issn", len(issns))
+			issns = filtered
+		}
 		// Turn list of issn into list of links.
 		// https://portal.issn.org/resource/ISSN/1521-9615?format=json
 		links := make([]string, len(issns))
@@ -350,7 +501,7 @@ func main() {
 			links[i] = fmt.Sprintf("https://portal.issn.org/resource/ISSN/%s?format=json", issns[i])
 		}
 		log.Printf("attempting to download %d links", len(links))
-		proc := parallel.NewProcessor(SliceReader(links), os.Stdout, fetch)
+		proc := parallel.NewProcessor(sliceReader(links), os.Stdout, fetch)
 		proc.BatchSize = *batchSize
 		proc.NumWorkers = *numWorkers
 		if err := proc.Run(); err != nil {
