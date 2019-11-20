@@ -31,6 +31,7 @@ var (
 	cacheDir     = flag.String("d", path.Join(xdg.CacheHome, appName), "path to cache dir")
 	quiet        = flag.Bool("q", false, "suppress any extra output")
 	list         = flag.Bool("l", false, "list all cached issn, one per line")
+	dump         = flag.Bool("m", false, "download public metadata in JSON format")
 )
 
 func WriteFileAtomicReader(filename string, r io.Reader, perm os.FileMode) error {
@@ -282,13 +283,43 @@ func ensureDir(name string) error {
 	return nil
 }
 
+// fetch can be plugged into miku/parallel for parallel processing. TODO(miku):
+// Make parallel a bit simpler to use outside the reader/writer realm. The byte
+// slices contains a list of issn, separated by newline.
+func fetch(b []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	for _, line := range strings.Split(string(b), "\n") {
+		line = strings.TrimSpace(line)
+		// Fetch URL, collect responses, return.
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		resp, err := pester.Get(line)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode >= 400 {
+			return nil, fmt.Errorf("got %d %s on %s", resp.StatusCode, resp.Status, line)
+		}
+		// TODO(martin): Is it JSON?
+		if _, err := io.Copy(&buf, resp.Body); err != nil {
+			return nil, err
+		}
+		if _, err := io.WriteString(&buf, "\n"); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
 func main() {
 	flag.Parse()
 	if *quiet {
 		log.SetOutput(ioutil.Discard)
 	}
 	cacher := NewCacher()
-	if *list {
+	switch {
+	case *list:
 		issns, err := cacher.List()
 		if err != nil {
 			log.Fatal(err)
@@ -296,5 +327,7 @@ func main() {
 		for _, issn := range issns {
 			fmt.Println(issn)
 		}
+	case *dump:
+		log.Printf("downloading public metadata")
 	}
 }
