@@ -295,7 +295,6 @@ func fetch(b []byte) ([]byte, error) {
 	enc := json.NewEncoder(&buf)
 	for _, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(line)
-		// Fetch URL, collect responses, return.
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
@@ -306,6 +305,7 @@ func fetch(b []byte) ([]byte, error) {
 		if resp.StatusCode >= 400 {
 			return nil, fmt.Errorf("got %d %s on %s", resp.StatusCode, resp.Status, line)
 		}
+		// Just a minimal container to hold the data to serialize (compact) again.
 		var m = make(map[string]interface{})
 		if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
 			return nil, err
