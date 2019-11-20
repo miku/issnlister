@@ -411,9 +411,9 @@ func fetch(b []byte) ([]byte, error) {
 		// again. This might fail, if the response is not JSON.
 		var m = make(map[string]interface{})
 		if err := json.NewDecoder(tee).Decode(&m); err != nil {
+			log.Println(err)
+			log.Println(body.String())
 			if *skipUndecodable {
-				log.Println(err)
-				log.Println(body.String())
 				continue
 			}
 			return nil, err
