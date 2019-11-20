@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"flag"
 	"fmt"
@@ -291,6 +292,7 @@ func ensureDir(name string) error {
 // slices contains a list of issn, separated by newline.
 func fetch(b []byte) ([]byte, error) {
 	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
 	for _, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(line)
 		// Fetch URL, collect responses, return.
@@ -304,12 +306,11 @@ func fetch(b []byte) ([]byte, error) {
 		if resp.StatusCode >= 400 {
 			return nil, fmt.Errorf("got %d %s on %s", resp.StatusCode, resp.Status, line)
 		}
-		// TODO(martin): Is it JSON?
-		// TODO(martin): Response is not compact JSON, which interferes with our linewise approach.
-		if _, err := io.Copy(&buf, resp.Body); err != nil {
+		var m = make(map[string]interface{})
+		if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
 			return nil, err
 		}
-		if _, err := io.WriteString(&buf, "\n"); err != nil {
+		if err := enc.Encode(m); err != nil {
 			return nil, err
 		}
 	}
