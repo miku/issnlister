@@ -304,7 +304,7 @@ func fetch(b []byte) ([]byte, error) {
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode >= 400 {
-			return nil, fmt.Errorf("got %d %s on %s", resp.StatusCode, resp.Status, line)
+			return nil, fmt.Errorf("got %s on %s", resp.Status, line)
 		}
 		// Just a minimal container to hold the data to serialize (compact) again.
 		var m = make(map[string]interface{})
