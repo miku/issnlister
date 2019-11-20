@@ -14,6 +14,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -32,6 +33,8 @@ var (
 	quiet        = flag.Bool("q", false, "suppress any extra output")
 	list         = flag.Bool("l", false, "list all cached issn, one per line")
 	dump         = flag.Bool("m", false, "download public metadata in JSON format")
+	numWorkers   = flag.Int("w", runtime.NumCPU()*2, "number of workers")
+	batchSize    = flag.Int("b", 2000, "batch size per worker")
 )
 
 func WriteFileAtomicReader(filename string, r io.Reader, perm os.FileMode) error {
@@ -302,6 +305,7 @@ func fetch(b []byte) ([]byte, error) {
 			return nil, fmt.Errorf("got %d %s on %s", resp.StatusCode, resp.Status, line)
 		}
 		// TODO(martin): Is it JSON?
+		// TODO(martin): Response is not compact JSON, which interferes with our linewise approach.
 		if _, err := io.Copy(&buf, resp.Body); err != nil {
 			return nil, err
 		}
@@ -310,6 +314,10 @@ func fetch(b []byte) ([]byte, error) {
 		}
 	}
 	return buf.Bytes(), nil
+}
+
+func SliceReader(s []string) io.Reader {
+	return strings.NewReader(strings.Join(s, "\n"))
 }
 
 func main() {
@@ -329,5 +337,22 @@ func main() {
 		}
 	case *dump:
 		log.Printf("downloading public metadata")
+		issns, err := cacher.List()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Turn list of issn into list of links.
+		// https://portal.issn.org/resource/ISSN/1521-9615?format=json
+		links := make([]string, len(issns))
+		for i := 0; i < len(links); i++ {
+			links[i] = fmt.Sprintf("https://portal.issn.org/resource/ISSN/%s?format=json", issns[i])
+		}
+		log.Printf("attempting to download %d links", len(links))
+		proc := parallel.NewProcessor(SliceReader(links), os.Stdout, fetch)
+		proc.BatchSize = *batchSize
+		proc.NumWorkers = *numWorkers
+		if err := proc.Run(); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
