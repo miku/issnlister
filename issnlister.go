@@ -35,7 +35,7 @@ var (
 	list         = flag.Bool("l", false, "list all cached issn, one per line")
 	dump         = flag.Bool("m", false, "download public metadata in JSON format")
 	numWorkers   = flag.Int("w", runtime.NumCPU()*2, "number of workers")
-	batchSize    = flag.Int("b", 2000, "batch size per worker")
+	batchSize    = flag.Int("b", 100, "batch size per worker")
 )
 
 func WriteFileAtomicReader(filename string, r io.Reader, perm os.FileMode) error {
