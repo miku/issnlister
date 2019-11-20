@@ -72,6 +72,14 @@ $ issnlister -l -q
 
 All data is cached (XDG), by default under `$HOME/.cache/issnlister/2019-11-11/...` where raw downloads and combined data lives.
 
+Alternatively:
+
+```
+$ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
+    grep 'https://portal.issn.org/resource/ISSN/[^"]*' | \
+    grep -oE '[0-9]{4}-[0-9]{3}[0-9xX]' | LC_ALL=C sort -u
+```
+
 ## TODO
 
 * [ ] fetch metadata (#1)
