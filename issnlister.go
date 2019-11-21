@@ -2,6 +2,19 @@
 //
 // Sitemap contains about 40 sub sitemaps, each with 50000 links. Cache all
 // sitemaps, maybe versioned and generate list on demand from cache.
+//
+// Notes:
+//
+// Sometimes, a supposedly JSON response comes back as XML; it's weird and rare
+// and I haven't been able to reproduce (use -u to mitigate).
+//
+// The link https://portal.issn.org/resource/ISSN/0874-2308?format=json can
+// back as 404, but it's there, right?
+//
+// TODO(martin): think of various resilience patterns, extending what pester
+// offers for HTTP (https://github.com/sethgrid/pester) for data; e.g. requeue
+// HTTP 500, HTTP 404 just in case; do response body plausibility checks, and
+// so on.
 package main
 
 import (
