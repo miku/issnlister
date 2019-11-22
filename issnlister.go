@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -52,6 +53,7 @@ var (
 	batchSize       = flag.Int("b", 100, "batch size per worker")
 	skipUndecodable = flag.Bool("u", false, "skip undecodable records")
 	ignoreFile      = flag.String("i", "", `path to file with ISSN to ignore, one ISSN per line, e.g. via: jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt`)
+	userAgent       = flag.String("ua", "issnlister/0.1 (https://github.com/miku/issnli)", "set user agent")
 )
 
 func WriteFileAtomicReader(filename string, r io.Reader, perm os.FileMode) error {
@@ -405,12 +407,18 @@ func ensureDir(name string) error {
 func fetch(b []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
+	client := pester.New()
 	for _, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		resp, err := pester.Get(line)
+		req, err := http.NewRequest("GET", line, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Add("User-Agent", *userAgent)
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, err
 		}
