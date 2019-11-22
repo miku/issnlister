@@ -82,6 +82,7 @@ $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
 
 ## TODO
 
-* [ ] fetch metadata (#1)
+* [x] fetch metadata (#1)
+* [ ] document harvesting process briefly in README
 * [ ] compress cache
 
