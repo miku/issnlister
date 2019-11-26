@@ -41,7 +41,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const appName = "issnlister"
+const (
+	appName    = "issnlister"
+	appVersion = "0.1.0"
+)
 
 var (
 	sitemapIndex    = flag.String("s", "https://portal.issn.org/sitemap.xml", "the main sitemap")
@@ -54,6 +57,7 @@ var (
 	skipUndecodable = flag.Bool("u", false, "skip undecodable records")
 	ignoreFile      = flag.String("i", "", `path to file with ISSN to ignore, one ISSN per line, e.g. via: jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt`)
 	userAgent       = flag.String("ua", "issnlister/0.1 (https://github.com/miku/issnli)", "set user agent")
+	showVersion     = flag.Bool("version", false, "show version")
 )
 
 func WriteFileAtomicReader(filename string, r io.Reader, perm os.FileMode) error {
@@ -475,6 +479,10 @@ func linesFromFile(filename string) ([]string, error) {
 
 func main() {
 	flag.Parse()
+	if *showVersion {
+		fmt.Printf("%s %s\n", appName, appVersion)
+		os.Exit(0)
+	}
 	if *quiet {
 		log.SetOutput(ioutil.Discard)
 	}
