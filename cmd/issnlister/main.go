@@ -35,6 +35,7 @@ import (
 	"strings"
 	"time"
 
+	"gist.github.com/miku/14218916ddb73d26e26fc2697d2c938a/atomic"
 	"github.com/adrg/xdg"
 	"github.com/miku/parallel"
 	"github.com/sethgrid/pester"
@@ -59,41 +60,6 @@ var (
 	userAgent       = flag.String("ua", "issnlister/0.1 (https://github.com/miku/issnli)", "set user agent")
 	showVersion     = flag.Bool("version", false, "show version")
 )
-
-func WriteFileAtomicReader(filename string, r io.Reader, perm os.FileMode) error {
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-	return WriteFileAtomic(filename, b, perm)
-}
-
-// WriteFileAtomic writes the data to a temp file and atomically move if everything else succeeds.
-func WriteFileAtomic(filename string, data []byte, perm os.FileMode) error {
-	dir, name := path.Split(filename)
-	f, err := ioutil.TempFile(dir, name)
-	if err != nil {
-		return err
-	}
-	_, err = f.Write(data)
-	if err == nil {
-		err = f.Sync()
-	}
-	if closeErr := f.Close(); err == nil {
-		err = closeErr
-	}
-	if permErr := os.Chmod(f.Name(), perm); err == nil {
-		err = permErr
-	}
-	if err == nil {
-		err = os.Rename(f.Name(), filename)
-	}
-	// Any err should result in full cleanup.
-	if err != nil {
-		os.Remove(f.Name())
-	}
-	return err
-}
 
 // StringSet is map disguised as set.
 type StringSet struct {
@@ -267,7 +233,7 @@ func (c *Cacher) fetchSitemapIndex() error {
 		return fmt.Errorf("failed to fetch sitemap: %d", resp.StatusCode)
 	}
 	defer resp.Body.Close()
-	return WriteFileAtomicReader(c.SitemapFile(), resp.Body, 0644)
+	return atomic.WriteFileReader(c.SitemapFile(), resp.Body, 0644)
 }
 
 // FetchSitemaps tries to fetch all sitemaps.
@@ -292,7 +258,7 @@ func (c *Cacher) fetchSitemaps() error {
 			return fmt.Errorf("failed to fetch sitemap at %s: %d", loc, resp.StatusCode)
 		}
 		defer resp.Body.Close()
-		if err := WriteFileAtomicReader(filename, resp.Body, 0644); err != nil {
+		if err := atomic.WriteFileReader(filename, resp.Body, 0644); err != nil {
 			return err
 		}
 	}
@@ -387,7 +353,7 @@ func (c *Cacher) List() ([]string, error) {
 		result = append(result, v)
 	}
 	sort.Strings(result)
-	if err := WriteFileAtomic(c.SerialnumbersFile(), []byte(strings.Join(result, "\n")), 0644); err != nil {
+	if err := atomic.WriteFile(c.SerialnumbersFile(), []byte(strings.Join(result, "\n")), 0644); err != nil {
 		return nil, err
 	}
 	return result, nil
