@@ -116,6 +116,7 @@ func main() {
 			fmt.Println(issn)
 		}
 	case *continueHarvest != "":
+		// -c implies -m
 		*dump = true
 		fallthrough
 	case *dump:
@@ -131,8 +132,7 @@ func main() {
 			if err = clam.Run(`sed -i '$ d' "{{ previous }}"`, clam.Map{"previous": *continueHarvest}); err != nil {
 				log.Fatal(err)
 			}
-			// Find all already harvested ISSN and generate temporary ignore file.
-			// LC_ALL=C grep -Eo '"@id":"resource/ISSN/[^"#]*' tmp/data.ndj | cut -d '/' -f 3 | LC_ALL=C sort -u > ignore.txt
+			// Find all already harvested ISSN and generate temporary ignore file, brittle regex.
 			command := fmt.Sprintf(`LC_ALL=C grep -Eo '"@id":"resource/ISSN/[^"#]*' "{{ previous }}" | cut -d '/' -f 3 | LC_ALL=C sort -u > {{ output }}`)
 			*ignoreFile, err = clam.RunOutput(command, clam.Map{"previous": *continueHarvest})
 			if err != nil {
