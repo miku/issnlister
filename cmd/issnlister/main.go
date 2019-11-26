@@ -138,6 +138,9 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+			defer func() {
+				os.Remove(*ignoreFile)
+			}()
 			f, err := os.OpenFile(*continueHarvest, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
 			if err != nil {
 				log.Fatal(err)
