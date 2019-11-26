@@ -57,7 +57,6 @@ var (
 	dump            = flag.Bool("m", false, "download public metadata in JSON format")
 	numWorkers      = flag.Int("w", runtime.NumCPU()*2, "number of workers")
 	batchSize       = flag.Int("b", 100, "batch size per worker")
-	skipUndecodable = flag.Bool("u", false, "skip undecodable records")
 	ignoreFile      = flag.String("i", "", `path to file with ISSN to ignore, one ISSN per line, e.g. via: jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt`)
 	userAgent       = flag.String("ua", "issnlister/0.1 (https://github.com/miku/issnli)", "set user agent")
 	showVersion     = flag.Bool("version", false, "show version")
@@ -378,34 +377,48 @@ func fetch(b []byte) ([]byte, error) {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		req, err := http.NewRequest("GET", line, nil)
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Add("User-Agent", *userAgent)
-		resp, err := client.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode >= 400 {
-			return nil, fmt.Errorf("got %s on %s", resp.Status, line)
-		}
-		var body bytes.Buffer
-		tee := io.TeeReader(resp.Body, &body)
-		// Just a minimal container to hold the data to serialize (compact)
-		// again. This might fail, if the response is not JSON.
-		var m = make(map[string]interface{})
-		if err := json.NewDecoder(tee).Decode(&m); err != nil {
-			log.Printf("%v at %s", err, line)
-			log.Println(body.String())
-			if *skipUndecodable {
+		var (
+			retryCount = 10
+			errors     []string
+		)
+		for {
+			if retryCount == 0 {
+				return nil, fmt.Errorf("giving up on %s, errors were: %s", line, errors)
+			}
+			retryCount--
+
+			req, err := http.NewRequest("GET", line, nil)
+			if err != nil {
+				return nil, err
+			}
+			req.Header.Add("User-Agent", *userAgent)
+			resp, err := client.Do(req)
+			if err != nil {
+				return nil, err
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode >= 400 {
+				msg := fmt.Sprintf("got %s on %s", resp.Status, line)
+				errors = append(errors, msg)
+				log.Warn(msg)
 				continue
 			}
-			return nil, err
-		}
-		if err := enc.Encode(m); err != nil {
-			return nil, err
+			var body bytes.Buffer
+			tee := io.TeeReader(resp.Body, &body)
+			// Just a container to hold the data to serialize (compact) again.
+			var m = make(map[string]interface{})
+			if err := json.NewDecoder(tee).Decode(&m); err != nil {
+				log.Printf("%v at %s", err, line)
+				log.Println(body.String())
+				msg := fmt.Sprintf("%s failed with %s", line, err)
+				errors = append(errors, msg)
+				log.Warn(msg)
+				continue
+			}
+			if err := enc.Encode(m); err != nil {
+				return nil, err
+			}
+			break
 		}
 	}
 	return buf.Bytes(), nil
