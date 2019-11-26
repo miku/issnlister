@@ -319,7 +319,6 @@ func (c *Cacher) List() ([]string, error) {
 		defer f.Close()
 		dec := xml.NewDecoder(f)
 		var us Urlset
-		// TODO(martin): Check for plausible content type here.
 		if err := dec.Decode(&us); err != nil {
 			return nil, err
 		}
