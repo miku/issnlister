@@ -1,4 +1,8 @@
-# ISSN list
+# ISSN lister
+
+This project aims to provide a fairly current [list of valid ISSN](https://git.io/Jewle).
+
+## International Standard Serial Number
 
 [International Standard Serial
 Number](https://en.wikipedia.org/wiki/International_Standard_Serial_Number), is
@@ -40,7 +44,7 @@ def calculate_issn_checkdigit(s):
 
 ## Number of ISSN
 
-* 2714711 (as of 2019-11-11)
+* 2714711 (as of 2019-11-11 per website; however only [2114384](https://git.io/Jewle) fetchable)
 
 Growth at about 50k to 120k updates and additions per year.
 
@@ -48,7 +52,7 @@ Growth at about 50k to 120k updates and additions per year.
 
 * 10^7
 
-Current probability that a random, valid ISSN is registered: 0.2714711.
+Current probability that a random, valid ISSN is registered: 0.2714711 (2019-11-11).
 
 ## Distribution
 
@@ -70,7 +74,9 @@ List ISSN, quietly.
 $ issnlister -l -q
 ```
 
-All data is cached (XDG), by default under `$HOME/.cache/issnlister/2019-11-11/...` where raw downloads and combined data lives.
+All data is cached (XDG), by default under
+`$HOME/.cache/issnlister/2019-11-11/...` where raw downloads and combined data
+lives.
 
 Alternatively:
 
@@ -78,6 +84,12 @@ Alternatively:
 $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
     grep 'https://portal.issn.org/resource/ISSN/[^"]*' | \
     grep -oE '[0-9]{4}-[0-9]{3}[0-9xX]' | LC_ALL=C sort -u
+```
+
+Harvest all metadata.
+
+```
+$ issnlister -m > data.ndj
 ```
 
 ## TODO
