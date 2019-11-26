@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
+	"github.com/miku/clam"
 	"github.com/miku/issnlister/atomic"
 	"github.com/miku/issnlister/lines"
 	"github.com/miku/issnlister/stringutil"
@@ -60,6 +61,7 @@ var (
 	ignoreFile      = flag.String("i", "", `path to file with ISSN to ignore, one ISSN per line, e.g. via: jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt`)
 	userAgent       = flag.String("ua", "issnlister/0.1 (https://github.com/miku/issnli)", "set user agent")
 	showVersion     = flag.Bool("version", false, "show version")
+	continueHarvest = flag.String("c", "", "continue harvest into a given file")
 )
 
 // Sitemapindex was generated 2019-09-28 18:56:12 by tir on sol.
@@ -115,7 +117,32 @@ func main() {
 			fmt.Println(issn)
 		}
 	case *dump:
+		var output io.Writer = os.Stdout
 		log.Printf("downloading public metadata")
+		if *continueHarvest != "" {
+			if *ignoreFile != "" {
+				log.Fatal("use either -c or -i, not both")
+			}
+			var err error
+			// Remove the last line from file, which might be partial. This is
+			// inplace, but that's ok.
+			if err = clam.Run(`sed -i '$ d' "{{ previous }}"`, clam.Map{"previous": *continueHarvest}); err != nil {
+				log.Fatal(err)
+			}
+			// Find all already harvested ISSN and generate temporary ignore file.
+			// LC_ALL=C grep -Eo '"@id":"resource/ISSN/[^"#]*' tmp/data.ndj | cut -d '/' -f 3 | LC_ALL=C sort -u > ignore.txt
+			command := fmt.Sprintf(`LC_ALL=C grep -Eo '"@id":"resource/ISSN/[^"#]*' "{{ previous }}" | cut -d '/' -f 3 | LC_ALL=C sort -u > {{ output }}`)
+			*ignoreFile, err = clam.RunOutput(command, clam.Map{"previous": *continueHarvest})
+			if err != nil {
+				log.Fatal(err)
+			}
+			f, err := os.OpenFile(*continueHarvest, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer f.Close()
+			output = f
+		}
 		issns, err := cacher.List()
 		if err != nil {
 			log.Fatal(err)
@@ -148,7 +175,7 @@ func main() {
 			links[i] = fmt.Sprintf("https://portal.issn.org/resource/ISSN/%s?format=json", issns[i])
 		}
 		log.Printf("attempting to download %d links", len(links))
-		proc := parallel.NewProcessor(stringutil.SliceReader(links), os.Stdout, fetch)
+		proc := parallel.NewProcessor(stringutil.SliceReader(links), output, fetch)
 		proc.BatchSize = *batchSize
 		proc.NumWorkers = *numWorkers
 		if err := proc.Run(); err != nil {
