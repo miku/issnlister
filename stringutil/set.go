@@ -2,8 +2,16 @@ package stringutil
 
 import (
 	"fmt"
+	"io"
 	"sort"
+	"strings"
 )
+
+// SliceReader turns a slice of strings into a reader simulating a newline
+// delimited file.
+func SliceReader(s []string) io.Reader {
+	return strings.NewReader(strings.Join(s, "\n"))
+}
 
 // StringSet is map disguised as set.
 type StringSet struct {

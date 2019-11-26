@@ -18,7 +18,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
@@ -37,6 +36,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/miku/issnlister/atomic"
+	"github.com/miku/issnlister/lines"
 	"github.com/miku/issnlister/stringutil"
 	"github.com/miku/parallel"
 	"github.com/sethgrid/pester"
@@ -93,6 +93,68 @@ type Urlset struct {
 		Changefreq string `xml:"changefreq"` // monthly, monthly, monthly...
 		Priority   string `xml:"priority"`   // 0.8, 0.8, 0.8, 0.8, 0.8, ...
 	} `xml:"url"`
+}
+
+func main() {
+	flag.Parse()
+	if *showVersion {
+		fmt.Printf("%s %s\n", appName, appVersion)
+		os.Exit(0)
+	}
+	if *quiet {
+		log.SetOutput(ioutil.Discard)
+	}
+	cacher := NewCacher()
+	switch {
+	case *list:
+		issns, err := cacher.List()
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, issn := range issns {
+			fmt.Println(issn)
+		}
+	case *dump:
+		log.Printf("downloading public metadata")
+		issns, err := cacher.List()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if *ignoreFile != "" {
+			ignoreList, err := lines.FromFile(*ignoreFile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("%d to ignore", len(ignoreList))
+
+			ignoreSet := stringutil.NewStringSet()
+			for _, v := range ignoreList {
+				ignoreSet.Add(v)
+			}
+			var filtered []string
+			for _, issn := range issns {
+				if ignoreSet.Contains(issn) {
+					continue
+				}
+				filtered = append(filtered, issn)
+			}
+			log.Printf("started with %d issn", len(issns))
+			issns = filtered
+		}
+		// Turn list of issn into list of links.
+		// https://portal.issn.org/resource/ISSN/1521-9615?format=json
+		links := make([]string, len(issns))
+		for i := 0; i < len(links); i++ {
+			links[i] = fmt.Sprintf("https://portal.issn.org/resource/ISSN/%s?format=json", issns[i])
+		}
+		log.Printf("attempting to download %d links", len(links))
+		proc := parallel.NewProcessor(stringutil.SliceReader(links), os.Stdout, fetch)
+		proc.BatchSize = *batchSize
+		proc.NumWorkers = *numWorkers
+		if err := proc.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 // Cacher fetches and caches responses.
@@ -231,6 +293,7 @@ func (c *Cacher) List() ([]string, error) {
 		defer f.Close()
 		dec := xml.NewDecoder(f)
 		var us Urlset
+		// TODO(martin): Check for plausible content type here.
 		if err := dec.Decode(&us); err != nil {
 			return nil, err
 		}
@@ -319,93 +382,4 @@ func fetch(b []byte) ([]byte, error) {
 		}
 	}
 	return buf.Bytes(), nil
-}
-
-func sliceReader(s []string) io.Reader {
-	return strings.NewReader(strings.Join(s, "\n"))
-}
-
-func linesFromReader(r io.Reader) (result []string, err error) {
-	br := bufio.NewReader(r)
-	for {
-		line, err := br.ReadString('\n')
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, strings.TrimSpace(line))
-	}
-	return result, nil
-}
-
-func linesFromFile(filename string) ([]string, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	return linesFromReader(f)
-}
-
-func main() {
-	flag.Parse()
-	if *showVersion {
-		fmt.Printf("%s %s\n", appName, appVersion)
-		os.Exit(0)
-	}
-	if *quiet {
-		log.SetOutput(ioutil.Discard)
-	}
-	cacher := NewCacher()
-	switch {
-	case *list:
-		issns, err := cacher.List()
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, issn := range issns {
-			fmt.Println(issn)
-		}
-	case *dump:
-		log.Printf("downloading public metadata")
-		issns, err := cacher.List()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if *ignoreFile != "" {
-			ignoreList, err := linesFromFile(*ignoreFile)
-			if err != nil {
-				log.Fatal(err)
-			}
-			log.Printf("%d to ignore", len(ignoreList))
-
-			ignoreSet := stringutil.NewStringSet()
-			for _, v := range ignoreList {
-				ignoreSet.Add(v)
-			}
-			var filtered []string
-			for _, issn := range issns {
-				if ignoreSet.Contains(issn) {
-					continue
-				}
-				filtered = append(filtered, issn)
-			}
-			log.Printf("started with %d issn", len(issns))
-			issns = filtered
-		}
-		// Turn list of issn into list of links.
-		// https://portal.issn.org/resource/ISSN/1521-9615?format=json
-		links := make([]string, len(issns))
-		for i := 0; i < len(links); i++ {
-			links[i] = fmt.Sprintf("https://portal.issn.org/resource/ISSN/%s?format=json", issns[i])
-		}
-		log.Printf("attempting to download %d links", len(links))
-		proc := parallel.NewProcessor(sliceReader(links), os.Stdout, fetch)
-		proc.BatchSize = *batchSize
-		proc.NumWorkers = *numWorkers
-		if err := proc.Run(); err != nil {
-			log.Fatal(err)
-		}
-	}
 }
