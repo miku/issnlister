@@ -60,7 +60,7 @@ var (
 	ignoreFile      = flag.String("i", "", `path to file with ISSN to ignore, one ISSN per line, e.g. via: jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt`)
 	userAgent       = flag.String("ua", fmt.Sprintf("%s/%s (https://github.com/miku/issnlister)", appName, appVersion), "set user agent")
 	showVersion     = flag.Bool("version", false, "show version")
-	continueHarvest = flag.String("c", "", "continue harvest into a given file")
+	continueHarvest = flag.String("c", "", "continue harvest into a given file, implies -m")
 )
 
 // Sitemapindex was generated 2019-09-28 18:56:12 by tir on sol.
@@ -115,6 +115,9 @@ func main() {
 		for _, issn := range issns {
 			fmt.Println(issn)
 		}
+	case *continueHarvest != "":
+		*dump = true
+		fallthrough
 	case *dump:
 		var output io.Writer = os.Stdout
 		log.Printf("downloading public metadata")
