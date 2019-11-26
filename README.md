@@ -25,6 +25,38 @@ also assigned a linking ISSN (ISSN-L), typically the same as the ISSN assigned
 to the serial in its first published medium, which links together all ISSNs
 assigned to the serial in every medium
 
+## Usage
+
+```
+$ issnlister -h
+Usage of issnlister:
+  -b int
+        batch size per worker (default 100)
+  -c string
+        continue harvest into a given file
+  -d string
+        path to cache dir (default "/home/tir/.cache/issnlister")
+  -i string
+        path to file with ISSN to ignore, one ISSN per line, e.g. via: jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt
+  -l    list all cached issn, one per line
+  -m    download public metadata in JSON format
+  -q    suppress any extra output
+  -s string
+        the main sitemap (default "https://portal.issn.org/sitemap.xml")
+  -ua string
+        set user agent (default "issnlister/0.1.0 (https://github.com/miku/issnlister)")
+  -version
+        show version
+  -w int
+        number of workers (default 16)
+```
+
+## Continue an interrupted harvest
+
+```
+$ issnlister -m -c already.harvested
+```
+
 ## Basic validation
 
 ```python
