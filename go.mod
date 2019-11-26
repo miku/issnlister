@@ -1,4 +1,4 @@
-module gist.github.com/miku/14218916ddb73d26e26fc2697d2c938a
+module github.com/miku/issnlister
 
 go 1.13
 
