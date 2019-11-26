@@ -388,7 +388,7 @@ func fetch(b []byte) ([]byte, error) {
 		)
 		for {
 			if retryCount == 0 {
-				return nil, fmt.Errorf("giving up on %s, errors were: %s", line, errors)
+				return nil, fmt.Errorf("giving up on %s, errors were: %v", line, errors)
 			}
 			retryCount--
 
@@ -415,7 +415,7 @@ func fetch(b []byte) ([]byte, error) {
 			if err := json.NewDecoder(tee).Decode(&m); err != nil {
 				log.Printf("%v at %s", err, line)
 				log.Println(body.String())
-				msg := fmt.Sprintf("%s failed with %s", line, err)
+				msg := fmt.Sprintf("%s failed with %s [%d]", line, err, retryCount)
 				errors = append(errors, msg)
 				log.Warn(msg)
 				continue
