@@ -58,7 +58,7 @@ var (
 	numWorkers      = flag.Int("w", runtime.NumCPU()*2, "number of workers")
 	batchSize       = flag.Int("b", 100, "batch size per worker")
 	ignoreFile      = flag.String("i", "", `path to file with ISSN to ignore, one ISSN per line, e.g. via: jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt`)
-	userAgent       = flag.String("ua", "issnlister/0.1 (https://github.com/miku/issnli)", "set user agent")
+	userAgent       = flag.String("ua", fmt.Sprintf("%s/%s (https://github.com/miku/issnlister)", appName, appVersion), "set user agent")
 	showVersion     = flag.Bool("version", false, "show version")
 	continueHarvest = flag.String("c", "", "continue harvest into a given file")
 )
