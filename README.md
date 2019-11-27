@@ -37,7 +37,7 @@ Usage of issnlister:
   -d string
         path to cache dir (default "/home/tir/.cache/issnlister")
   -i string
-        path to file with ISSN to ignore, one ISSN per line, e.g. via: jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt
+        path to file with ISSN to ignore, one ISSN per line, e.g. ...
   -l    list all cached issn, one per line
   -m    download public metadata in JSON format
   -q    suppress any extra output
