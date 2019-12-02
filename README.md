@@ -51,13 +51,21 @@ Usage of issnlister:
         number of workers (default 16)
 ```
 
+## Start a harvest
+
+```
+$ issnlister -m > file.ndj
+```
+
 ## Continue an interrupted harvest
 
+This will try to not refetch already requested ISSN.
+
 ```
-$ issnlister -m -c already.harvested
+$ issnlister -m -c file.ndj
 ```
 
-## Basic validation
+## Basic ISSN validation
 
 ```python
 def calculate_issn_checkdigit(s):
@@ -98,7 +106,7 @@ Various formats are available.
 
 * [xml](https://portal.issn.org/resource/ISSN/2257-6754?format=xml), [json](https://portal.issn.org/resource/ISSN/2257-6754?format=json), ...
 
-## Harvest
+## List of ISSN
 
 List ISSN, quietly.
 
@@ -118,15 +126,10 @@ $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
     grep -oE '[0-9]{4}-[0-9]{3}[0-9xX]' | LC_ALL=C sort -u
 ```
 
-Harvest all metadata.
-
-```
-$ issnlister -m > data.ndj
-```
 
 ## TODO
 
 * [x] fetch metadata (#1)
-* [ ] document harvesting process briefly in README
+* [x] document harvesting process briefly in README
 * [ ] compress cache
 
