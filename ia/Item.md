@@ -1,6 +1,6 @@
 # Upload to IA
 
-* identifier: issn_public_data_20191125
+> [issn_public_data_20191125](https://archive.org/details/issn_public_data_20191125) in [ia_biblio_metadata](https://archive.org/details/ia_biblio_metadata)
 
 ```
 $ ls -la data.ndjson
