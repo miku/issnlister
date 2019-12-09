@@ -23,5 +23,8 @@ c1e4e1ea49ec47d8221e5cd18b94b5ef44454185  data.ndjson.xz
 Command:
 
 ```
-$ ia upload issn_public_data_20191125 issn.jpg data.ndjson.xz --metadata="mediatype:data" --metadata="collection:ia_biblio_metadata" --retries 3
+$ ia upload issn_public_data_20191125 issn.jpg data.ndjson.xz \
+    --metadata="mediatype:data" \
+    --metadata="collection:ia_biblio_metadata" \
+    --retries 3
 ```
