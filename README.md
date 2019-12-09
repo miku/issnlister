@@ -1,6 +1,8 @@
 # ISSN lister
 
-This project aims to provide a fairly current [list of valid ISSN](https://git.io/Jewle).
+This project aims to provide a fairly current [list of valid
+ISSN](https://git.io/Jewle). A raw download from 11/2019 can be found at [the
+Internet Archive](https://archive.org/details/issn_public_data_20191125).
 
 ## International Standard Serial Number
 
