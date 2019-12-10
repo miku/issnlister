@@ -48,16 +48,14 @@ const (
 var (
 	defaultUserAgent = fmt.Sprintf("%s/%s (https://github.com/miku/issnlister)", appName, appVersion)
 
-	sitemapIndex = flag.String("s", "https://portal.issn.org/sitemap.xml", "the main sitemap")
-	cacheDir     = flag.String("d", path.Join(xdg.CacheHome, appName), "path to cache dir")
-	quiet        = flag.Bool("q", false, "suppress any extra output")
-	list         = flag.Bool("l", false, "list all cached issn, one per line")
-	dump         = flag.Bool("m", false, "download public metadata in JSON format")
-	numWorkers   = flag.Int("w", runtime.NumCPU()*2, "number of workers")
-	batchSize    = flag.Int("b", 100, "batch size per worker")
-
-	// jq -rc '.["@graph"][]|.issn?' data.ndj | grep -v null | sort -u > ignore.txt
-	ignoreFile      = flag.String("i", "", `path to file with ISSN to ignore, one ISSN per line`)
+	sitemapIndex    = flag.String("s", "https://portal.issn.org/sitemap.xml", "the main sitemap")
+	cacheDir        = flag.String("d", path.Join(xdg.CacheHome, appName), "path to cache dir")
+	quiet           = flag.Bool("q", false, "suppress any extra output")
+	list            = flag.Bool("l", false, "list all cached issn, one per line")
+	dump            = flag.Bool("m", false, "download public metadata in JSON format")
+	numWorkers      = flag.Int("w", runtime.NumCPU()*2, "number of workers")
+	batchSize       = flag.Int("b", 100, "batch size per worker")
+	ignoreFile      = flag.String("i", "", `path to file with ISSN to ignore, one ISSN (1234-575X) per line`)
 	userAgent       = flag.String("ua", defaultUserAgent, "set user agent")
 	showVersion     = flag.Bool("version", false, "show version")
 	continueHarvest = flag.String("c", "", "continue harvest into a given file, implies -m")
