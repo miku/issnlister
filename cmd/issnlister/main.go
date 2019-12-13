@@ -42,7 +42,7 @@ import (
 
 const (
 	appName    = "issnlister"
-	appVersion = "0.1.0"
+	appVersion = "0.1.1"
 )
 
 var (
