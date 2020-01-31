@@ -89,7 +89,7 @@ def calculate_issn_checkdigit(s):
 
 ## Number of ISSN
 
-* 2714711 (as of 2019-11-11 per website; however only [2114384](https://git.io/Jewle) fetchable)
+* 2714711 (as of 2019-11-11 per website; however only [2125746](https://git.io/Jewle) fetchable)
 
 Growth at about 50k to 120k updates and additions per year.
 
