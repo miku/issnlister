@@ -7,6 +7,10 @@ Archive](https://archive.org/details/issn_public_data_20191125).
 
 > ISSN-LIST-DATE: 2020-01-31 -- [download](https://git.io/Jewle)
 
+Publicly available metadata has been archived at:
+
+* [https://archive.org/details/issn_public_data_20191125](https://archive.org/details/issn_public_data_20191125)
+
 ## International Standard Serial Number
 
 [International Standard Serial
