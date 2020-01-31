@@ -5,7 +5,7 @@ ISSN](https://git.io/Jewle). A raw download from 11/2019 can be
 found at [the Internet
 Archive](https://archive.org/details/issn_public_data_20191125).
 
-> ISSN-LIST-DATE: 2020-01-24 -- [download](https://git.io/Jewle)
+> ISSN-LIST-DATE: 2020-01-31 -- [download](https://git.io/Jewle)
 
 ## International Standard Serial Number
 
