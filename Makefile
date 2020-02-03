@@ -8,5 +8,8 @@ all: $(TARGETS)
 
 .PHONY: clean
 clean:
+	rm -f issn.tsv
 	rm -f issnlister
 
+issn.tsv: all
+	./issnlister -l | sort -u > $@
