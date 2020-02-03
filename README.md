@@ -5,7 +5,7 @@ ISSN](https://git.io/Jewle). A raw download from 11/2019 can be
 found at [the Internet
 Archive](https://archive.org/details/issn_public_data_20191125).
 
-> ISSN-LIST-DATE: 2020-02-01 -- [download](https://git.io/Jewle)
+> ISSN-LIST-DATE: 2020-02-03 -- [download](https://git.io/Jewle)
 
 Publicly available metadata has been archived at:
 
@@ -93,7 +93,7 @@ def calculate_issn_checkdigit(s):
 
 ## Number of ISSN
 
-* 2714711 (as of 2019-11-11 per website; however only [2125939](https://git.io/Jewle) fetchable)
+* 2714711 (as of 2019-11-11 per website; however only [2125956](https://git.io/Jewle) fetchable)
 
 Growth at about 50k to 120k updates and additions per year.
 
