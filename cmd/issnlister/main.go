@@ -127,7 +127,7 @@ func main() {
 			var err error
 			// Remove the last line from file, which might be partial. This is
 			// inplace, but that's ok.
-			if err = clam.Run(`sed -i '$ d' "{{ previous }}"`, clam.Map{"previous": *continueHarvest}); err != nil {
+			if err = clam.Run(`touch "{{ previous }}" && sed -i '$ d' "{{ previous }}"`, clam.Map{"previous": *continueHarvest}); err != nil {
 				log.Fatal(err)
 			}
 			// Find all already harvested ISSN and generate temporary ignore file, brittle regex.
