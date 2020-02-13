@@ -129,3 +129,9 @@ $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
     grep -oE '[0-9]{4}-[0-9]{3}[0-9xX]' | LC_ALL=C sort -u
 ```
 
+## Update ISSN list
+
+```
+$ make issn.tsv
+```
+
