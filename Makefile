@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 TARGETS := issnlister
 
 .PHONY: all

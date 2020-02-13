@@ -1,9 +1,10 @@
 # ISSN lister
 
-This project aims to provide a fairly current [list of valid
-ISSN](https://git.io/Jewle).
+This [project](github.com/miku/issnlister) aims to provide a fairly current
+[list of valid ISSN](https://git.io/Jewle).
 
 > ISSN-LIST-DATE: 2020-02-08 -- [download](https://git.io/Jewle)
+> COUNT: 2127171
 
 Publicly available metadata has been archived at:
 
@@ -85,7 +86,7 @@ def calculate_issn_checkdigit(s):
 
 ## Number of ISSN
 
-* ~2714711 (as of 2019-11-11 per website; however only [2127171](https://git.io/Jewle) fetchable)
+* ~2714711 (as of 2019-11-11 per website)
 
 Growth at about 50k to 120k updates and additions per year.
 
@@ -127,10 +128,4 @@ $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
     grep 'https://portal.issn.org/resource/ISSN/[^"]*' | \
     grep -oE '[0-9]{4}-[0-9]{3}[0-9xX]' | LC_ALL=C sort -u
 ```
-
-
-## TODO
-
-* [x] fetch metadata (#1)
-* [x] document harvesting process briefly in README
 
