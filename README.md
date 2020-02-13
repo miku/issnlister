@@ -40,7 +40,7 @@ Usage of issnlister:
   -b int
         batch size per worker (default 100)
   -c string
-        continue harvest into a given file
+        continue harvest into a given file (implies -m)
   -d string
         path to cache dir (default "/home/tir/.cache/issnlister")
   -i string
@@ -58,18 +58,12 @@ Usage of issnlister:
         number of workers (default 16)
 ```
 
-## Start a harvest
+## Start a harvest or continue a harvest
+
+With `-c` you can start or continue an interrupted harvest into the same.
 
 ```
-$ issnlister -m > file.ndj
-```
-
-## Continue an interrupted harvest
-
-This will try to not refetch already requested ISSN.
-
-```
-$ issnlister -m -c file.ndj
+$ issnlister -c file.ndj
 ```
 
 ## Basic ISSN validation
@@ -91,7 +85,7 @@ def calculate_issn_checkdigit(s):
 
 ## Number of ISSN
 
-* 2714711 (as of 2019-11-11 per website; however only [2127171](https://git.io/Jewle) fetchable)
+* ~2714711 (as of 2019-11-11 per website; however only [2127171](https://git.io/Jewle) fetchable)
 
 Growth at about 50k to 120k updates and additions per year.
 
@@ -99,7 +93,7 @@ Growth at about 50k to 120k updates and additions per year.
 
 * 10^7
 
-Current probability that a random, valid ISSN is registered: 0.2714711 (2019-11-11).
+Current probability that a random, valid ISSN is registered: ~0.2714711 (2019-11-11).
 
 ## Distribution
 
@@ -121,9 +115,10 @@ List ISSN, quietly.
 $ issnlister -l -q
 ```
 
-All data is cached (XDG), by default under
-`$HOME/.cache/issnlister/2019-11-11/...` where raw downloads and combined data
-lives.
+All data is cached
+([XDG](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)),
+by default under `$HOME/.cache/issnlister/2019-11-11/...` where raw downloads
+and combined data lives.
 
 Alternatively:
 
@@ -138,5 +133,4 @@ $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
 
 * [x] fetch metadata (#1)
 * [x] document harvesting process briefly in README
-* [ ] compress cache
 
