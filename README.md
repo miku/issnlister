@@ -4,7 +4,7 @@ This [project](github.com/miku/issnlister) aims to provide a fairly current
 [list of valid ISSN](https://git.io/Jewle).
 
 > ISSN-LIST-DATE: 2020-02-19 -- [download](https://git.io/Jewle)
-> COUNT: 2128370
+> COUNT: 2128429
 
 Publicly available metadata has been archived at:
 

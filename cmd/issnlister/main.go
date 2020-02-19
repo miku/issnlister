@@ -8,7 +8,7 @@
 // Sometimes, a supposedly JSON response comes back as XML; it's weird and rare
 // and I haven't been able to reproduce.
 //
-// The link https://portal.issn.org/resource/ISSN/0874-2308?format=json can
+// The link https://portal.issn.org/resource/ISSN/0874-2308?format=json came
 // back as 404, but it's there, right?
 //
 package main
