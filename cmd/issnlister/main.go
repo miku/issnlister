@@ -14,6 +14,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
@@ -38,6 +39,7 @@ import (
 	"github.com/miku/parallel"
 	"github.com/sethgrid/pester"
 	log "github.com/sirupsen/logrus"
+	"github.com/vmihailenco/msgpack"
 )
 
 const (
@@ -59,6 +61,7 @@ var (
 	userAgent       = flag.String("ua", defaultUserAgent, "set user agent")
 	showVersion     = flag.Bool("version", false, "show version")
 	continueHarvest = flag.String("c", "", "continue harvest into a given file, implies -m")
+	validate        = flag.Bool("k", false, "validate issn or list of issn (read from stdin)")
 )
 
 // Sitemapindex was generated 2019-09-28 18:56:12 by tir on sol.
@@ -113,6 +116,53 @@ func main() {
 		for _, issn := range issns {
 			fmt.Println(issn)
 		}
+	case *validate:
+		set, err := cacher.Set()
+		if err != nil {
+			log.Fatal(err)
+		}
+		stat, err := os.Stdin.Stat()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// https://stackoverflow.com/a/26567513/89391
+		if (stat.Mode() & os.ModeCharDevice) == 0 {
+			br := bufio.NewReader(os.Stdin)
+			for {
+				line, err := br.ReadString('\n')
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					log.Fatal(err)
+				}
+				v := strings.TrimSpace(line)
+				if len(v) == 8 {
+					v = v[:4] + "-" + v[4:]
+				}
+				_, ok := set[v]
+				status := "ok"
+				if !ok {
+					status = "xx"
+				}
+				fmt.Printf("%s\t%s\n", v, status)
+			}
+		} else {
+			// Assume issnlister -c XXXX-XXXX ...
+			for _, arg := range flag.Args() {
+				v := strings.TrimSpace(arg)
+				if len(v) == 8 {
+					v = v[:4] + "-" + v[4:]
+				}
+				_, ok := set[v]
+				status := "ok"
+				if !ok {
+					status = "xx"
+				}
+				fmt.Printf("%s\t%s\n", v, status)
+			}
+		}
+
 	case *continueHarvest != "":
 		// -c implies -m
 		*dump = true
@@ -215,6 +265,10 @@ func (c *Cacher) SerialnumbersFile() string {
 	return filepath.Join(c.SitemapDir(), "issnlist.tsv")
 }
 
+func (c *Cacher) SerialnumbersSetFile() string {
+	return filepath.Join(c.SitemapDir(), "issns.msgp")
+}
+
 func (c *Cacher) fetchSitemapIndex() error {
 	if err := ensureDir(c.SitemapDir()); err != nil {
 		return err
@@ -280,6 +334,37 @@ func (c *Cacher) findLocations() error {
 		c.Locs = append(c.Locs, sm.Loc)
 	}
 	return nil
+}
+
+// Set returns a set of ISSN, cached for performance.
+func (c *Cacher) Set() (map[string]struct{}, error) {
+	if _, err := os.Stat(c.SerialnumbersSetFile()); err != nil {
+		log.Printf("caching set at %v", c.SerialnumbersSetFile())
+		list, err := c.List()
+		if err != nil {
+			return nil, err
+		}
+		m := make(map[string]struct{})
+		for _, issn := range list {
+			m[issn] = struct{}{}
+		}
+		b, err := msgpack.Marshal(m)
+		if err != nil {
+			return nil, err
+		}
+		if err := ioutil.WriteFile(c.SerialnumbersSetFile(), b, 0644); err != nil {
+			return nil, err
+		}
+	}
+	b, err := ioutil.ReadFile(c.SerialnumbersSetFile())
+	if err != nil {
+		return nil, err
+	}
+	v := make(map[string]struct{})
+	if err := msgpack.Unmarshal(b, &v); err != nil {
+		return nil, err
+	}
+	return v, nil
 }
 
 // List returns a list of ISSN.
