@@ -244,6 +244,7 @@ type Cacher struct {
 	Locs      []string // Sitemap locations.
 }
 
+// NewCacher returns a Cacher with a default prefix (changing per day).
 func NewCacher() *Cacher {
 	return &Cacher{
 		Directory: *cacheDir,
@@ -251,24 +252,28 @@ func NewCacher() *Cacher {
 	}
 }
 
+// SitemapDir returns the directory to cache the sitemap.
 func (c *Cacher) SitemapDir() string {
 	return filepath.Join(c.Directory, c.Prefix)
 }
 
-// SitemapFile returns the filename and creates necessary subdirectories to
-// hold the file.
+// SitemapFile returns the filename for the global sitemap and creates
+// necessary subdirectories to hold the file.
 func (c *Cacher) SitemapFile() string {
 	return filepath.Join(c.SitemapDir(), "sitemap.xml")
 }
 
+// SerialnumbersFile return the location of the issn list cache file.
 func (c *Cacher) SerialnumbersFile() string {
 	return filepath.Join(c.SitemapDir(), "issnlist.tsv")
 }
 
+// SerialnumbersSetFile returns the filename of the serialized set of issns.
 func (c *Cacher) SerialnumbersSetFile() string {
 	return filepath.Join(c.SitemapDir(), "issns.msgp")
 }
 
+// fetchSitemapIndex downloads and caches the main sitemap file.
 func (c *Cacher) fetchSitemapIndex() error {
 	if err := ensureDir(c.SitemapDir()); err != nil {
 		return err
@@ -287,7 +292,7 @@ func (c *Cacher) fetchSitemapIndex() error {
 	return atomic.WriteFileReader(c.SitemapFile(), resp.Body, 0644)
 }
 
-// FetchSitemaps tries to fetch all sitemaps.
+// fetchSitemaps tries to fetch all linked sitemaps (currently around 40).
 func (c *Cacher) fetchSitemaps() error {
 	if err := c.findLocations(); err != nil {
 		return err
@@ -316,6 +321,7 @@ func (c *Cacher) fetchSitemaps() error {
 	return nil
 }
 
+// findLocations populates the linked sitemaps.
 func (c *Cacher) findLocations() error {
 	if err := c.fetchSitemapIndex(); err != nil {
 		return err
@@ -367,7 +373,7 @@ func (c *Cacher) Set() (map[string]struct{}, error) {
 	return v, nil
 }
 
-// List returns a list of ISSN.
+// List returns a string slice of all ISSN.
 func (c *Cacher) List() ([]string, error) {
 	if _, err := os.Stat(c.SerialnumbersFile()); err == nil {
 		f, err := os.Open(c.SerialnumbersFile())
@@ -420,7 +426,7 @@ func (c *Cacher) List() ([]string, error) {
 		return buf.Bytes(), nil
 	})
 
-	// Give each worker two files at a file.
+	// Give each worker two files at a time.
 	processor.BatchSize = 2
 	if err := processor.Run(); err != nil {
 		return nil, err
@@ -441,6 +447,7 @@ func (c *Cacher) List() ([]string, error) {
 	return result, nil
 }
 
+// ensureDir makes sure a directory exists.
 func ensureDir(name string) error {
 	if _, err := os.Stat(name); os.IsNotExist(err) {
 		if err := os.MkdirAll(name, 0755); err != nil {
