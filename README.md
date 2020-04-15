@@ -74,7 +74,7 @@ issn.tsv: all
 
 ## Start a harvest or continue a harvest
 
-With `-c` you can start or continue an interrupted harvest into the same.
+With `-c` you can start or continue an interrupted harvest into the same file.
 
 ```
 $ issnlister -c file.ndj
