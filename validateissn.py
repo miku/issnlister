@@ -1,3 +1,23 @@
+#!/usr/bin/env python
+
+"""
+A minimal script to check, whether an ISSN is valid.
+
+    $ python validateissn.py 1234-5678
+    1234-5678       False
+
+    $ python validateissn.py 12345679
+    1234-5679       True
+
+Also calculate check digit:
+
+    $ python validateissn.py 4444222
+    4444222 4444-222X
+
+    $ python validateissn.py 4444-222
+    4444222 4444-222X
+"""
+
 import argparse
 import sys
 
@@ -22,6 +42,14 @@ def validate(issn):
     checkdigit = calculate_issn_checkdigit(issn[:7])
     return issn[7] == '{}'.format(checkdigit)
 
+def normalize(issn):
+    issn = issn.upper()
+    if len(issn) == 8:
+        return issn[:4] + "-" + issn[4:]
+    elif len(issn) == 9 and issn[4] == '-':
+        return issn
+    raise ValueError('cannot normalize: %s' % issn)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('validateissn.py')
@@ -40,10 +68,11 @@ if __name__ == '__main__':
         ]
     try:
         for issn in issns:
-            if len(issn.replace('-', '')) == 7:
-                print('{}\t{}'.format(issn, issn + calculate_issn_checkdigit(issn)))
+            v = issn.replace('-', '')
+            if len(v) == 7:
+                print('{}\t{}'.format(issn, normalize(v + calculate_issn_checkdigit(v))))
             else:
-                print('{}\t{}'.format(issn, validate(issn)))
+                print('{}\t{}'.format(normalize(issn), validate(issn)))
     except ValueError as err:
         print(err, file=sys.stdout)
 
