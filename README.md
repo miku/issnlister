@@ -4,8 +4,8 @@ This [project](github.com/miku/issnlister) aims to provide a fairly current
 [list of valid ISSN](https://git.io/Jewle). It was developed at the [Internet
 Archive](https://archive.org/).
 
-> ISSN-LIST-DATE: 2020-04-06 -- [download](https://git.io/Jewle)
-> COUNT: 2134924
+> ISSN-LIST-DATE: 2020-04-15 -- [download](https://git.io/Jewle)
+> COUNT: 2136250
 
 Publicly available metadata has been archived at:
 
@@ -69,7 +69,7 @@ $ tail -4 Makefile
 issn.tsv: all
         ./issnlister -l | sort -u > $@
         sed -i -e "s/ISSN-LIST-DATE: [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ISSN-LIST-DATE: $$(date +'%Y-%m-%d')/g" README.md
-        sed -i -e "s/COUNT: 2134924[0-9]*/COUNT: 2134924$$(wc -l $@ | awk '{print $$1}')/g" README.md
+        sed -i -e "s/COUNT: 2136250[0-9]*/COUNT: 2136250$$(wc -l $@ | awk '{print $$1}')/g" README.md
 ```
 
 ## Start a harvest or continue a harvest
