@@ -62,15 +62,7 @@ Usage of issnlister:
 
 ## Generate a new list
 
-Update list and README with `make issn.tsv`.
-
-```
-$ tail -4 Makefile
-issn.tsv: all
-        ./issnlister -l | sort -u > $@
-        sed -i -e "s/ISSN-LIST-DATE: [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ISSN-LIST-DATE: $$(date +'%Y-%m-%d')/g" README.md
-        sed -i -e "s/COUNT: 2139915[0-9]*/COUNT: 2139915$$(wc -l $@ | awk '{print $$1}')/g" README.md
-```
+Update list and README with a simple `make issn.tsv` (assuming sed, awk and sort installed).
 
 ## Start a harvest or continue a harvest
 
@@ -99,15 +91,20 @@ def calculate_issn_checkdigit(s):
 
 ## Number of ISSN
 
-* ~2714711 (as of 2019-11-11 per website)
+* ~2714711 (as of 2019-11-11 per website), but
 
 Growth at about 50k to 120k updates and additions per year.
+
+```
+$ curl -sL https://git.io/Jf8sa | wc -l
+2139915
+```
 
 ## Upper limit of valid ISSN?
 
 * 10^7
 
-Current probability that a random, valid ISSN is registered: ~0.2714711 (2019-11-11).
+Current probability that a random, valid ISSN is registered: ~0.213 (2020-05-12).
 
 ## Distribution
 
@@ -140,11 +137,5 @@ Alternatively:
 $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
     grep 'https://portal.issn.org/resource/ISSN/[^"]*' | \
     grep -oE '[0-9]{4}-[0-9]{3}[0-9xX]' | LC_ALL=C sort -u
-```
-
-## Update ISSN list
-
-```
-$ make issn.tsv
 ```
 
