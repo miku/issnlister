@@ -4,8 +4,8 @@ This [project](github.com/miku/issnlister) aims to provide a fairly current
 [list of valid ISSN](https://git.io/Jf8sa). It was developed at the [Internet
 Archive](https://archive.org/).
 
-> ISSN-LIST-DATE: 2020-07-21 -- [download](https://git.io/Jf8sa)
-> COUNT: 2150172
+> ISSN-LIST-DATE: 2020-07-25 -- [download](https://git.io/Jf8sa)
+> COUNT: 2150939
 
 Publicly available metadata has been archived at:
 
