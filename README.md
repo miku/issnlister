@@ -1,6 +1,6 @@
 # ISSN lister
 
-This [project](github.com/miku/issnlister) aims to provide a fairly current
+This [project](https://github.com/miku/issnlister) aims to provide a fairly current
 [list of valid ISSN](https://git.io/Jf8sa). It was developed at the [Internet
 Archive](https://archive.org/).
 
