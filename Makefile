@@ -11,6 +11,7 @@ all: $(TARGETS)
 clean:
 	rm -f issn.tsv
 	rm -f issnlister
+	rm -fr __pycache__
 
 issn.tsv: all
 	./issnlister -l | sort -u > $@
