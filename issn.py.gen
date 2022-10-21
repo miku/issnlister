@@ -31,4 +31,11 @@ valid_issn = set((l for l in lines if l))
 del bio
 del decomp
 del lines
+
+if __name__ == '__main__':
+    for v in sys.argv[1:]:
+        v = v.strip()
+        is_valid = v in valid_issn
+        print('{}\t{}'.format(v, int(is_valid)))
+
 EOF
