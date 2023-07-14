@@ -11,6 +11,7 @@ all: $(TARGETS)
 clean:
 	rm -f issn.tsv
 	rm -f issnlister
+	rm -f issncheck
 	rm -fr __pycache__
 
 issn.tsv: all
@@ -20,3 +21,9 @@ issn.tsv: all
 
 issn.py: issn.tsv
 	bash issn.py.gen > issn.py
+
+issncheck: cmd/issncheck/main.go issn.tsv
+	cp issn.tsv cmd/issncheck/issn.tsv
+	go build -o issncheck cmd/issncheck/main.go
+	rm -f cmd/issncheck/issn.tsv
+
