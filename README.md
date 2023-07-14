@@ -139,3 +139,38 @@ $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
     grep -oE '[0-9]{4}-[0-9]{3}[0-9xX]' | LC_ALL=C sort -u
 ```
 
+## Bulk ISSN check
+
+There is a bulk ISSN check tool included in this repo, `issncheck`. It not
+checks whether a ISSN is "valid", but whether it "actually exists" (with some
+latency, given its embedded data).
+
+You need to feed it one ISSN per line to stdin - it will output a TSV with "0", "1" or "X" (unparsable) and the value.
+
+```
+$ head -10 sample.tsv
+20140827
+1932-6203
+0000-0002
+00032489
+0030-1558
+2009-1005
+31735070
+1476-2986
+31735066
+0000-0003
+
+$ cat sample.tsv | ./issncheck
+1       2014-0827
+1       1932-6203
+0       0000-0002
+0       0003-2489
+1       0030-1558
+0       2009-1005
+0       3173-5070
+1       1476-2986
+0       3173-5066
+0       0000-0003
+```
+
+You can check 30M ISSN is a few seconds.
