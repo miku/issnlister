@@ -4,7 +4,7 @@ This [project](https://github.com/miku/issnlister) aims to provide a fairly curr
 [list of valid ISSN](https://git.io/Jf8sa). It was developed at the [Internet
 Archive](https://archive.org/).
 
-> ISSN-LIST-DATE: 2023-07-14 -- [download](https://git.io/Jf8sa)
+> ISSN-LIST-DATE: 2023-07-15 -- [download](https://git.io/Jf8sa)
 > COUNT: 2317755
 
 Publicly available metadata has been archived at:
@@ -144,6 +144,12 @@ $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
 There is a bulk ISSN check tool included in this repo, `issncheck`. It does not
 check whether a ISSN is "valid" (that's an [algorithm](https://en.wikipedia.org/wiki/ISSN#Code_format)), but whether it "actually exists" (which is a dataset; with some
 latency, since the binary [embeds](https://pkg.go.dev/embed) the data).
+
+To build:
+
+```
+$ make issncheck
+```
 
 You need to feed it one ISSN per line to stdin - it will output a TSV with "0", "1" or "X" (unparsable) and the value.
 
