@@ -141,9 +141,9 @@ $ find ~/.cache/issnlister/2019-11-20 -name 'sitemap*xml' -exec 'cat' {} \; | \
 
 ## Bulk ISSN check
 
-There is a bulk ISSN check tool included in this repo, `issncheck`. It not
-checks whether a ISSN is "valid", but whether it "actually exists" (with some
-latency, given its embedded data).
+There is a bulk ISSN check tool included in this repo, `issncheck`. It does not
+check whether a ISSN is "valid" (that's an [algorithm](https://en.wikipedia.org/wiki/ISSN#Code_format)), but whether it "actually exists" (which is a dataset; with some
+latency, since the binary [embeds](https://pkg.go.dev/embed) the data).
 
 You need to feed it one ISSN per line to stdin - it will output a TSV with "0", "1" or "X" (unparsable) and the value.
 
