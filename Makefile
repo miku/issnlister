@@ -15,7 +15,7 @@ clean:
 	rm -fr __pycache__
 
 issn.tsv: all
-	./issnlister -l | sort -u > $@
+	./issnlister -l | sort -S50% -u > $@
 	sed -i -e "s/ISSN-LIST-DATE: [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ISSN-LIST-DATE: $$(date +'%Y-%m-%d')/g" README.md
 	sed -i -e "s/COUNT: [0-9]*/COUNT: $$(wc -l $@ | awk '{print $$1}')/g" README.md
 
