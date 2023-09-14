@@ -5,7 +5,7 @@ This [project](https://github.com/miku/issnlister) aims to provide a fairly curr
 Archive](https://archive.org/).
 
 > ISSN-LIST-DATE: 2023-09-14 -- [download](https://git.io/Jf8sa)
-> COUNT: 2326521
+> COUNT: 2326985
 
 Publicly available metadata has been archived at:
 
