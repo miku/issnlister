@@ -1,3 +1,8 @@
+// issncheck tells you, whether an ISSN is registered or not (by using a
+// hopefully up to date list of ISSN scraped from issn.org sitemap).
+//
+// Note: The issn.tsv file will be temporarily copied into this folder during
+// compilation.
 package main
 
 import (
