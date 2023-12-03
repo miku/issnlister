@@ -35,6 +35,8 @@ del lines
 if __name__ == '__main__':
     for v in sys.argv[1:]:
         v = v.strip()
+        if len(v) == 8:
+            v = v[:4] + "-" + v[4:]
         is_valid = v in valid_issn
         print('{}\t{}'.format(v, int(is_valid)))
 
