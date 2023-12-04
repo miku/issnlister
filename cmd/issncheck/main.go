@@ -25,6 +25,8 @@ func main() {
 		issnMap[v] = struct{}{}
 	}
 	br := bufio.NewReader(os.Stdin)
+	bw := bufio.NewWriter(os.Stdout)
+	defer bw.Flush()
 	for {
 		line, err := br.ReadString('\n')
 		if err == io.EOF {
@@ -42,9 +44,9 @@ func main() {
 		}
 		v := line[:4] + "-" + line[4:]
 		if _, ok := issnMap[v]; ok {
-			fmt.Printf("1\t%v\n", v)
+			fmt.Fprintf(bw, "1\t%v\n", v)
 		} else {
-			fmt.Printf("0\t%v\n", v)
+			fmt.Fprintf(bw, "0\t%v\n", v)
 		}
 	}
 }
