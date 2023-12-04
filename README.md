@@ -179,4 +179,5 @@ $ cat sample.tsv | ./issncheck
 0       0000-0003
 ```
 
-You can check 30M ISSN is a few seconds.
+Data point: The `issncheck` tool can verify about 700K ISSN per second on a
+[i7-8550U](https://www.intel.com/content/www/us/en/products/sku/122589/intel-core-i78550u-processor-8m-cache-up-to-4-00-ghz/specifications.html).
