@@ -8,7 +8,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/miku/clam v0.1.0
-	github.com/miku/parallel v0.0.0-20221125231438-6020962e560a
+	github.com/miku/parallel v0.1.3
 	github.com/sethgrid/pester v1.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
