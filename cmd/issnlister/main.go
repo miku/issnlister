@@ -10,7 +10,6 @@
 //
 // The link https://portal.issn.org/resource/ISSN/0874-2308?format=json came
 // back as 404, but it's there, right?
-//
 package main
 
 import (
@@ -45,6 +44,9 @@ import (
 const (
 	appName    = "issnlister"
 	appVersion = "0.1.1"
+
+	StatusOK   = "ok"
+	StatusMiss = "xx"
 )
 
 var (
@@ -141,9 +143,9 @@ func main() {
 					v = v[:4] + "-" + v[4:]
 				}
 				_, ok := set[v]
-				status := "ok"
+				status := StatusOK
 				if !ok {
-					status = "xx"
+					status = StatusMiss
 				}
 				fmt.Printf("%s\t%s\n", v, status)
 			}
@@ -155,9 +157,9 @@ func main() {
 					v = v[:4] + "-" + v[4:]
 				}
 				_, ok := set[v]
-				status := "ok"
+				status := StatusOK
 				if !ok {
-					status = "xx"
+					status = StatusMiss
 				}
 				fmt.Printf("%s\t%s\n", v, status)
 			}
