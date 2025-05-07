@@ -64,6 +64,7 @@ var (
 	showVersion     = flag.Bool("version", false, "show version")
 	continueHarvest = flag.String("c", "", "continue harvest into a given file, implies -m")
 	validate        = flag.Bool("k", false, "validate issn or list of issn (read from stdin)")
+	cleanCache      = flag.Bool("C", false, "clean cache")
 )
 
 // Sitemapindex was generated 2019-09-28 18:56:12 by tir on sol.
@@ -107,6 +108,20 @@ func main() {
 	}
 	if *quiet {
 		log.SetOutput(ioutil.Discard)
+	}
+	if *cleanCache {
+		if _, err := os.Stat(*cacheDir); os.IsNotExist(err) {
+			os.Exit(0)
+		}
+		size, err := DirSize(*cacheDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := os.RemoveAll(*cacheDir); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprintf(os.Stderr, "issnlister: cleaned up %0.2fMB\n", float64(size)/1048576)
+		os.Exit(0)
 	}
 	cacher := NewCacher()
 	switch {
@@ -237,6 +252,20 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+}
+
+func DirSize(path string) (int64, error) {
+	var size int64
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return err
+	})
+	return size, err
 }
 
 // Cacher fetches and caches responses.
