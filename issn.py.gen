@@ -2,10 +2,10 @@
 
 cat <<EOF
 """
-Module exposing valid_issn set.
+Module exposing registered_issn set.
 
     >>> import issn
-    >>> len(issn.valid_issn)
+    >>> len(issn.registered_issn)
     2278518
 
 In [1]: %time import issn
@@ -18,7 +18,9 @@ import zlib
 import sys
 import io
 
-__all__ = ["valid_issn"]
+__all__ = ["valid_issn", "registered_issn"]
+
+valid_issn = registered_issn # there are about 8M valid ISSN, but only about 2M registered
 
 data = base64.b64decode("""
 $(gzip -c < issn.tsv | base64 -w 80)
@@ -27,7 +29,7 @@ bio = io.BytesIO()
 bio.write(data)
 decomp = zlib.decompress(bio.getvalue(), 16+zlib.MAX_WBITS)
 lines = (b.decode("utf-8") for b in decomp.split(b"\n"))
-valid_issn = set((l for l in lines if l))
+registered_issn = set((l for l in lines if l))
 del bio
 del decomp
 del lines
@@ -37,7 +39,7 @@ if __name__ == '__main__':
         v = v.strip()
         if len(v) == 8:
             v = v[:4] + "-" + v[4:]
-        is_valid = v in valid_issn
-        print('{}\t{}'.format(v, int(is_valid)))
+        is_registered = v in registered_issn
+        print('{}\t{}'.format(v, int(is_registered)))
 
 EOF
