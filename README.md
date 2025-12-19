@@ -97,7 +97,7 @@ Growth at about 50k to 120k updates and additions per year.
 
 ```
 $ curl -sL https://git.io/Jf8sa | wc -l
-2139915
+2442201
 ```
 
 ## Upper limit of valid ISSN?
