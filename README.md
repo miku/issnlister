@@ -1,5 +1,13 @@
 # ISSN lister
 
+----
+
+🛑 Note: As of 04/2026 the previous way to generate a list of registered ISSN from
+the sitemap no longer works. The previous
+[sitemap.xml](https://portal.issn.org/sitemap.xml) has been removed.
+
+----
+
 This [project](https://github.com/miku/issnlister) aims to provide a fairly current
 [list of valid ISSN](https://git.io/Jf8sa). It was developed at the [Internet
 Archive](https://archive.org/).
