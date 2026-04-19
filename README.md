@@ -1,10 +1,10 @@
 # ISSN lister
 
-----
-
-🛑 Note: As of 04/2026 the previous way to generate a list of registered ISSN from
-the sitemap no longer works. The previous
-[sitemap.xml](https://portal.issn.org/sitemap.xml) has been removed.
+🛑 Note: As of 04/2026 the previous way to generate a list of registered ISSN
+from the sitemap no longer works. The previous
+[sitemap.xml](https://portal.issn.org/sitemap.xml) has been removed. Our last
+snapshot of valid, registered ISSN contained [2448542
+ISSN](https://git.io/Jf8sa) and dates to 2026-02-16.
 
 ----
 
