@@ -38,11 +38,56 @@ import (
 )
 
 const (
-	defaultUA   = "issnprobe/0.1.0 (+https://github.com/miku/issnlister)"
-	jsonLDType  = "application/ld+json"
+	defaultUA    = "issnprobe/0.2.0 (+https://github.com/miku/issnlister)"
+	jsonLDType   = "application/ld+json"
 	lookupURLFmt = "https://portal.issn.org/resource/ISSN/%s"
-	version     = "0.1.0"
+	version      = "0.2.0"
+	// schemaVersion is stamped into every cached Result. Bump whenever
+	// classify() changes; older cache entries are then re-classified
+	// from the saved JSON-LD body on next read (no network hit).
+	schemaVersion = 2
 )
+
+// classify inspects an HTTP response and decides whether an ISSN is
+// actually registered with bibliographic metadata, merely acknowledged
+// by the portal as "legacy" (no data), or not found at all.
+//
+// Some ISSN return 200 with a "No data available" page — often via an
+// HTML fallback even when JSON-LD is requested. These should NOT count
+// as registered; they are flagged legacy instead.
+func classify(status int, body []byte) (registered, legacy bool) {
+	if status != http.StatusOK || len(body) == 0 {
+		return false, false
+	}
+	s := string(body)
+	if strings.Contains(s, "No data available") {
+		return false, true
+	}
+	if !strings.Contains(s, `"@context"`) {
+		// not JSON-LD (some HTML page we don't recognise) — stay
+		// conservative and don't count as registered
+		return false, false
+	}
+	// Positive metadata signals in JSON-LD responses from issn.org.
+	// A real record carries at least one title/name/type marker.
+	markers := []string{
+		`"mainTitle"`,
+		`"keyTitle"`,
+		`"http://schema.org/name"`,
+		`"schema:name"`,
+		`"name"`,
+		`"Periodical"`,
+		`"issuance"`,
+	}
+	for _, m := range markers {
+		if strings.Contains(s, m) {
+			return true, false
+		}
+	}
+	// JSON-LD with @context but no bibliographic markers: treat as
+	// a stub/legacy response.
+	return false, true
+}
 
 // ----- ISSN math ----------------------------------------------------------
 
@@ -118,11 +163,13 @@ func loadKnown(path string) (map[string]struct{}, error) {
 
 // Result is the per-ISSN cache record.
 type Result struct {
-	ISSN       string    `json:"issn"`
-	Status     int       `json:"status"`
-	Registered bool      `json:"registered"`
-	FetchedAt  time.Time `json:"fetched_at"`
-	Error      string    `json:"error,omitempty"`
+	ISSN          string    `json:"issn"`
+	Status        int       `json:"status"`
+	Registered    bool      `json:"registered"`
+	Legacy        bool      `json:"legacy,omitempty"`
+	SchemaVersion int       `json:"schema_version"`
+	FetchedAt     time.Time `json:"fetched_at"`
+	Error         string    `json:"error,omitempty"`
 }
 
 type Prober struct {
@@ -154,6 +201,20 @@ func (p *Prober) readCache(issn string) (*Result, bool) {
 	var r Result
 	if err := json.Unmarshal(b, &r); err != nil {
 		return nil, false
+	}
+	// Auto-upgrade stale cache entries when we have the saved body
+	// on disk (old classifier called "No data available" pages
+	// registered). No network access involved.
+	if r.SchemaVersion < schemaVersion {
+		if body, ferr := os.ReadFile(p.bodyPath(issn)); ferr == nil {
+			reg, leg := classify(r.Status, body)
+			r.Registered = reg
+			r.Legacy = leg
+		}
+		r.SchemaVersion = schemaVersion
+		if nb, merr := json.Marshal(&r); merr == nil {
+			_ = os.WriteFile(p.cachePath(issn), nb, 0o644)
+		}
 	}
 	return &r, true
 }
@@ -231,16 +292,14 @@ func (p *Prober) probe(ctx context.Context, issn string) (*Result, error) {
 		lastErr = nil
 		break
 	}
+	reg, leg := classify(status, body)
 	r := &Result{
-		ISSN:      issn,
-		Status:    status,
-		FetchedAt: time.Now().UTC(),
-	}
-	// A registered ISSN returns 200 with a JSON-LD document that
-	// contains an @context token. Bare 200 with empty/HTML body is
-	// not treated as registered.
-	if status == http.StatusOK && len(body) > 0 && strings.Contains(string(body), `"@context"`) {
-		r.Registered = true
+		ISSN:          issn,
+		Status:        status,
+		Registered:    reg,
+		Legacy:        leg,
+		SchemaVersion: schemaVersion,
+		FetchedAt:     time.Now().UTC(),
 	}
 	if lastErr != nil && status == 0 {
 		r.Error = lastErr.Error()
@@ -367,20 +426,24 @@ func frontierCandidates(known map[string]struct{}, density map[string]int, spec 
 // ----- stats --------------------------------------------------------------
 
 type estimate struct {
-	Probes     int     `json:"probes"`
-	Hits       int     `json:"hits"`
-	PoolSize   int     `json:"pool_size"`
-	PHat       float64 `json:"p_hat"`
-	NHat       float64 `json:"n_hat"`
-	NormalLo   float64 `json:"normal_ci_lo"`
-	NormalHi   float64 `json:"normal_ci_hi"`
-	WilsonLo   float64 `json:"wilson_ci_lo"`
-	WilsonHi   float64 `json:"wilson_ci_hi"`
-	MarginAbs  float64 `json:"normal_margin_abs"` // half-width on N̂
+	Probes    int     `json:"probes"`
+	Hits      int     `json:"hits"`
+	Legacy    int     `json:"legacy"`
+	PoolSize  int     `json:"pool_size"`
+	PHat      float64 `json:"p_hat"`
+	NHat      float64 `json:"n_hat"`
+	NormalLo  float64 `json:"normal_ci_lo"`
+	NormalHi  float64 `json:"normal_ci_hi"`
+	WilsonLo  float64 `json:"wilson_ci_lo"`
+	WilsonHi  float64 `json:"wilson_ci_hi"`
+	MarginAbs float64 `json:"normal_margin_abs"` // half-width on N̂
+	// Separate estimate for "legacy" (ack'd but no bibliographic data).
+	LegacyPHat float64 `json:"legacy_p_hat"`
+	LegacyNHat float64 `json:"legacy_n_hat"`
 }
 
-func computeEstimate(hits, probes, pool int) estimate {
-	e := estimate{Probes: probes, Hits: hits, PoolSize: pool}
+func computeEstimate(hits, legacy, probes, pool int) estimate {
+	e := estimate{Probes: probes, Hits: hits, Legacy: legacy, PoolSize: pool}
 	if probes == 0 {
 		return e
 	}
@@ -399,6 +462,9 @@ func computeEstimate(hits, probes, pool int) estimate {
 	half := z * math.Sqrt(p*(1-p)/n+z*z/(4*n*n)) / denom
 	e.WilsonLo = math.Max(0, centre-half) * float64(pool)
 	e.WilsonHi = math.Min(1, centre+half) * float64(pool)
+	lp := float64(legacy) / float64(probes)
+	e.LegacyPHat = lp
+	e.LegacyNHat = lp * float64(pool)
 	return e
 }
 
@@ -408,7 +474,7 @@ func main() {
 	var (
 		issnPath    = flag.String("f", "issn.tsv", "path to known ISSN list (one per line)")
 		cacheDir    = flag.String("d", "", "cache dir (default XDG_CACHE_HOME/issnprobe)")
-		mode        = flag.String("mode", "estimate", "candidate mode: estimate | sparse | frontier")
+		mode        = flag.String("mode", "estimate", "candidate mode: estimate | sparse | frontier | reclassify")
 		delayMs     = flag.Int("delay", 3000, "minimum ms between network requests")
 		saveBody    = flag.Bool("save-body", true, "save JSON-LD body for registered ISSN")
 		prefixMin   = flag.String("prefix-min", "0000", "4-digit min prefix, inclusive")
@@ -437,6 +503,17 @@ func main() {
 	}
 	if err := os.MkdirAll(*cacheDir, 0o755); err != nil {
 		log.Fatal(err)
+	}
+
+	// Offline maintenance: walk the cache, re-run classify() on saved
+	// bodies, rewrite results. No network.
+	if *mode == "reclassify" {
+		scanned, changed, err := reclassifyCache(*cacheDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("reclassify: scanned=%d changed=%d", scanned, changed)
+		return
 	}
 
 	pMin, err := strconv.Atoi(*prefixMin)
@@ -525,8 +602,8 @@ func main() {
 	enc := json.NewEncoder(bw)
 
 	var (
-		probes, hits, cached, errs int
-		lastNet                    time.Time
+		probes, hits, legacy, cached, errs int
+		lastNet                            time.Time
 	)
 	for _, issn := range candidates {
 		if ctx.Err() != nil {
@@ -560,17 +637,64 @@ func main() {
 		if r.Registered {
 			hits++
 		}
+		if r.Legacy {
+			legacy++
+		}
 		if err := enc.Encode(r); err != nil {
 			log.Printf("encode %s: %v", issn, err)
 		}
 	}
 	bw.Flush()
-	log.Printf("probes=%d hits=%d cached=%d errors=%d", probes, hits, cached, errs)
+	log.Printf("probes=%d hits=%d legacy=%d cached=%d errors=%d",
+		probes, hits, legacy, cached, errs)
 	if *mode == "estimate" && probes > 0 {
-		e := computeEstimate(hits, probes, poolSize)
+		e := computeEstimate(hits, legacy, probes, poolSize)
 		b, _ := json.MarshalIndent(e, "", "  ")
 		fmt.Fprintln(os.Stderr, string(b))
 	}
+}
+
+// reclassifyCache walks the cache tree and rewrites every Result JSON
+// by re-running classify() against the saved JSON-LD body (when
+// present). Pure offline operation — no network access.
+func reclassifyCache(dir string) (scanned int, changed int, err error) {
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, werr error) error {
+		if werr != nil {
+			return werr
+		}
+		if info.IsDir() || !strings.HasSuffix(path, ".json") {
+			return nil
+		}
+		b, rerr := os.ReadFile(path)
+		if rerr != nil {
+			return rerr
+		}
+		var r Result
+		if jerr := json.Unmarshal(b, &r); jerr != nil {
+			return nil
+		}
+		scanned++
+		if r.ISSN == "" || len(r.ISSN) != 9 {
+			return nil
+		}
+		bodyFile := filepath.Join(filepath.Dir(path), r.ISSN+".jsonld")
+		prevReg, prevLeg, prevVer := r.Registered, r.Legacy, r.SchemaVersion
+		if body, berr := os.ReadFile(bodyFile); berr == nil {
+			reg, leg := classify(r.Status, body)
+			r.Registered = reg
+			r.Legacy = leg
+		}
+		r.SchemaVersion = schemaVersion
+		if r.Registered != prevReg || r.Legacy != prevLeg || r.SchemaVersion != prevVer {
+			nb, _ := json.Marshal(&r)
+			if werr := os.WriteFile(path, nb, 0o644); werr != nil {
+				return werr
+			}
+			changed++
+		}
+		return nil
+	})
+	return scanned, changed, err
 }
 
 func countUnknownPool(known map[string]struct{}, pMin, pMax int) int {

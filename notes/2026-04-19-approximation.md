@@ -164,12 +164,25 @@ concentrates probes on the partial/frontier strata.
 - **Non-uniform registration timing**. Registrations are not i.i.d.
   across U — they cluster within blocks. Simple random sampling still
   gives an unbiased p̂; block-level estimates need per-block sampling.
-- **Server quirks**. A 200 with no JSON-LD payload, or a 3xx redirect,
-  should not count as "registered". The prober checks for a `@context`
-  token in the body.
+- **Legacy / "No data available" responses**. A large population of
+  ISSN return HTTP 200 with a JSON-LD body that contains `@context`
+  and an `identifiedBy` block but no bibliographic metadata (no
+  `mainTitle`, `name`, publisher, etc.). The HTML variant of these
+  pages shows "No data available". The portal treats them as known
+  ISSN, but for our purposes — "does this ISSN carry a registration
+  record we could harvest?" — they do not qualify. Example: `0000-2445`
+  returns a 449-byte JSON-LD stub; the entire `0000` block we sampled
+  is legacy. The prober now distinguishes three outcomes:
+    - `registered=true`  — JSON-LD with title/name/Periodical markers
+    - `legacy=true`      — stub response or HTML "No data available"
+    - otherwise          — 404 or non-portal response
+  Estimates for N̂ use only `registered=true` counts. The estimate
+  output also reports `legacy_n_hat` for situational awareness.
 - **Cache staleness**. A registered ISSN can be un-registered or merged.
-  Cache entries are timestamped; a `-refresh` option can re-probe older
-  hits selectively.
+  Cache entries are timestamped and carry a `schema_version`; bump the
+  constant in the classifier and run `-mode reclassify` to re-score
+  every cached response from the saved JSON-LD body without any network
+  traffic.
 
 ## 3. Operational rules (portal is fragile and paywalled)
 
