@@ -1,19 +1,11 @@
 # ISSN lister
 
-🛑 Note: As of 04/2026 the previous way to generate a list of registered ISSN
-from the sitemap no longer works. The previous
-[sitemap.xml](https://portal.issn.org/sitemap.xml) has been removed. Our last
-snapshot of valid, registered ISSN contained [2448542
-ISSN](https://git.io/Jf8sa) and dates to 2026-02-16.
-
-----
-
 This [project](https://github.com/miku/issnlister) aims to provide a fairly current
 [list of valid ISSN](https://git.io/Jf8sa). It was developed at the [Internet
 Archive](https://archive.org/).
 
-> ISSN-LIST-DATE: 2026-02-16 -- [download](https://git.io/Jf8sa)
-> COUNT: 2448542
+> ISSN-LIST-DATE: 2026-08-24 -- [download](https://git.io/Jf8sa)
+> COUNT: 2469920
 
 Publicly available metadata has been archived at:
 
